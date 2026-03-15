@@ -110,8 +110,11 @@ function setupHtml() {
       .step:last-of-type { border-bottom:0; margin-bottom:0; padding-bottom:0; }
       .step-num { font-size:12px; color:#9ca3af; margin-bottom:4px; }
       .step-title { font-size:16px; font-weight:600; color:#fff; margin:0 0 6px 0; }
-      .status-ok { color:#86efac; }
-      .status-pending { color:#fcd34d; }
+      .adapter-statuses { display:flex; flex-direction:column; gap:8px; margin-bottom:12px; }
+      .adapter-status { background:#1a1a1a; border:1px solid #2d2d2d; border-radius:8px; padding:10px 14px; font-size:13px; display:flex; align-items:center; gap:8px; }
+      .adapter-status.status-ok { border-left:3px solid #22c55e; color:#86efac; }
+      .adapter-status.status-pending { border-left:3px solid #525252; color:#9ca3af; }
+      .adapter-status .status-check { font-size:16px; line-height:1; }
     </style>
   </head>
   <body>
@@ -124,10 +127,12 @@ function setupHtml() {
         <div class="step-num">Step 1 — AI adapters (optional)</div>
         <div class="step-title">Codex &amp; Claude (OpenAI &amp; Anthropic)</div>
         <p class="muted" style="margin:0 0 10px 0; font-size:13px;">Only needed if you want agents to run. Set <code style="background:#1a1a1a; padding:2px 6px; border-radius:4px;">OPENAI_API_KEY</code> and/or <code style="background:#1a1a1a; padding:2px 6px; border-radius:4px;">ANTHROPIC_API_KEY</code> in Railway variables. Codex requires a one-time login below; Claude uses the env key automatically. You can skip this and add keys later — the app works without them; agents will fail until keys are set.</p>
-        <div class="row" style="margin-bottom:6px;"><span id="codexStatus" class="status-pending">Codex: checking...</span></div>
+        <div class="adapter-statuses">
+          <div class="adapter-status status-pending" id="codexStatusWrap"><span class="status-check" id="codexCheck">○</span><span id="codexStatus">Codex: checking...</span></div>
+          <div class="adapter-status status-pending" id="claudeStatusWrap"><span class="status-check" id="claudeCheck">○</span><span id="claudeStatus">Claude: checking...</span></div>
+        </div>
         <div class="row" id="codexButtonRow" style="margin-bottom:8px;"><button id="codexLogin" type="button">Run Codex login</button></div>
         <pre id="codexOutput" style="margin-top:10px; display:none;">-</pre>
-        <div class="row" style="margin-bottom:6px;"><span id="claudeStatus" class="status-pending">Claude: checking...</span></div>
       </div>
 
       <div class="step">
@@ -157,7 +162,11 @@ function setupHtml() {
       const codexBtn = document.getElementById("codexLogin");
       const codexButtonRow = document.getElementById("codexButtonRow");
       const codexOutput = document.getElementById("codexOutput");
+      const codexStatusWrap = document.getElementById("codexStatusWrap");
+      const codexCheck = document.getElementById("codexCheck");
       const codexStatusEl = document.getElementById("codexStatus");
+      const claudeStatusWrap = document.getElementById("claudeStatusWrap");
+      const claudeCheck = document.getElementById("claudeCheck");
       const claudeStatusEl = document.getElementById("claudeStatus");
 
       async function refreshHealth() {
@@ -177,31 +186,36 @@ function setupHtml() {
           const cx = j.codex || {};
           const cl = j.claude || {};
           if (cx.codexAuthenticated) {
-            codexStatusEl.textContent = "Codex: authenticated ✓";
-            codexStatusEl.className = "status-ok";
+            codexStatusWrap.className = "adapter-status status-ok";
+            codexCheck.textContent = "✓";
+            codexStatusEl.textContent = "Codex: authenticated";
             codexButtonRow.style.display = "none";
           } else {
+            codexStatusWrap.className = "adapter-status status-pending";
+            codexCheck.textContent = "○";
             codexButtonRow.style.display = "";
             if (cx.openaiApiKeySet) {
               codexStatusEl.textContent = "Codex: Not authenticated — run login below";
-              codexStatusEl.className = "status-pending";
             } else {
               codexStatusEl.textContent = "Codex: Set OPENAI_API_KEY in Railway, then run login";
-              codexStatusEl.className = "status-pending";
             }
           }
           if (cl.anthropicApiKeySet) {
-            claudeStatusEl.textContent = "Claude: API key set ✓";
-            claudeStatusEl.className = "status-ok";
+            claudeStatusWrap.className = "adapter-status status-ok";
+            claudeCheck.textContent = "✓";
+            claudeStatusEl.textContent = "Claude: API key set";
           } else {
+            claudeStatusWrap.className = "adapter-status status-pending";
+            claudeCheck.textContent = "○";
             claudeStatusEl.textContent = "Claude: Set ANTHROPIC_API_KEY in Railway for Claude-based agents";
-            claudeStatusEl.className = "status-pending";
           }
         } catch {
+          codexStatusWrap.className = "adapter-status status-pending";
+          codexCheck.textContent = "○";
           codexStatusEl.textContent = "Codex: status unavailable";
-          codexStatusEl.className = "status-pending";
+          claudeStatusWrap.className = "adapter-status status-pending";
+          claudeCheck.textContent = "○";
           claudeStatusEl.textContent = "Claude: status unavailable";
-          claudeStatusEl.className = "status-pending";
         }
       }
 
