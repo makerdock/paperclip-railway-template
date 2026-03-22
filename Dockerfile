@@ -9,7 +9,7 @@ RUN apt-get update \
 RUN corepack enable
 
 ARG PAPERCLIP_REPO=https://github.com/makerdock/paperclip.git
-ARG PAPERCLIP_REF=fix/resume-session-wake-context
+ARG PAPERCLIP_REF=staging
 
 WORKDIR /paperclip
 RUN git clone --depth 1 --branch "${PAPERCLIP_REF}" "${PAPERCLIP_REPO}" .
