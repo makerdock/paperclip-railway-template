@@ -8,8 +8,8 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 RUN corepack enable
 
-ARG PAPERCLIP_REPO=https://github.com/paperclipai/paperclip.git
-ARG PAPERCLIP_REF=v0.3.1
+ARG PAPERCLIP_REPO=https://github.com/makerdock/paperclip.git
+ARG PAPERCLIP_REF=fix/resume-session-wake-context
 
 WORKDIR /paperclip
 RUN git clone --depth 1 --branch "${PAPERCLIP_REF}" "${PAPERCLIP_REPO}" .

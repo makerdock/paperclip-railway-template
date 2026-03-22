@@ -1,6 +1,6 @@
 import fs from "node:fs";
 
-const owner = "paperclipai";
+const owner = "makerdock";
 const repo = "paperclip";
 const token = process.env.GITHUB_TOKEN;
 
