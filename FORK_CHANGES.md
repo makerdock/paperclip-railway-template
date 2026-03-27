@@ -74,4 +74,12 @@ These are custom env vars needed for our deployment (set in Railway):
 - **When merging upstream:** Always check if the merge overwrites `packages/adapter-utils/src/server-utils.ts` or any adapter `execute.ts` files. If so, re-apply the wake context fix.
 - **Dockerfile changes:** If upstream adds new workspace packages that the server imports, the Railway template Dockerfile needs updated build order.
 - **PR upstream:** The wake context fix should be PR'd to `paperclipai/paperclip` so we don't have to maintain the fork long-term.
-# Trigger rebuild: upstream paperclip synced 2026-03-27T00:30
+### 3. Fix External Directory Permissions in OpenCode Execute Path
+- **Commit:** `020f96f2` (Mar 27, 2026)
+- **PR:** makerdock/paperclip#3
+- **Problem:** The OpenCode adapter's `testEnvironment()` called `prepareOpenCodeRuntimeConfig()` which grants `permission.external_directory=allow`, but the actual `execute()` path skipped this entirely. Agents failed with `adapter_failed` when reading AGENT_HOME files (HEARTBEAT.md, SOUL.md, TOOLS.md) that sit outside the working directory — OpenCode auto-rejected the `external_directory` permission requests.
+- **Fix:** Added `prepareOpenCodeRuntimeConfig()` call to `execute.ts`, threaded prepared env through command resolution, model validation, and child process execution, with `finally` cleanup.
+- **Files changed:**
+  - `packages/adapters/opencode-local/src/server/execute.ts`
+
+# Trigger rebuild: external_directory permissions fix merged to staging 2026-03-27
