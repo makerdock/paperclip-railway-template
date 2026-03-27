@@ -74,3 +74,4 @@ These are custom env vars needed for our deployment (set in Railway):
 - **When merging upstream:** Always check if the merge overwrites `packages/adapter-utils/src/server-utils.ts` or any adapter `execute.ts` files. If so, re-apply the wake context fix.
 - **Dockerfile changes:** If upstream adds new workspace packages that the server imports, the Railway template Dockerfile needs updated build order.
 - **PR upstream:** The wake context fix should be PR'd to `paperclipai/paperclip` so we don't have to maintain the fork long-term.
+# Trigger rebuild: upstream paperclip synced 2026-03-27T00:30
