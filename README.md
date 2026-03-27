@@ -49,6 +49,7 @@ Set these on the **Paperclip** service in Railway (template editor or service Va
 |----------|-------------|-----|
 | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` | Links Paperclip to the Postgres service. Use the Postgres reference variable so Railway injects the URL. |
 | `BETTER_AUTH_SECRET` | e.g. `${{secret(64, "abcdef0123456789")}}` or a long random string | Secret for auth cookies/sessions. Must be at least 32 characters. |
+| `PAPERCLIP_AGENT_JWT_SECRET` | e.g. `${{secret(64, "abcdef0123456789")}}` or the same value as `BETTER_AUTH_SECRET` | Required for local heartbeat runs to mint per-run agent JWTs and inject `PAPERCLIP_API_KEY`. |
 | `HOST` | `0.0.0.0` | Bind inside the container so Railway’s proxy can reach the app. |
 | `PORT` | `3100` | Port the app listens on (must match the proxy). |
 | `SERVE_UI` | `true` | Serve the web UI. |
@@ -102,6 +103,7 @@ docker run --rm -d --name paperclip_app --network paperclip_net -p 3100:3100 \
   -e PAPERCLIP_DEPLOYMENT_MODE=authenticated -e PAPERCLIP_DEPLOYMENT_EXPOSURE=private \
   -e PAPERCLIP_PUBLIC_URL=http://localhost:3100 -e BETTER_AUTH_BASE_URL=http://localhost:3100 \
   -e BETTER_AUTH_SECRET=local-dev-secret-32chars-min \
+  -e PAPERCLIP_AGENT_JWT_SECRET=local-dev-secret-32chars-min \
   -v paperclip_local_data:/paperclip \
   paperclip-railway-template
 ```

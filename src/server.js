@@ -15,11 +15,13 @@ let paperclipProc = null;
 
 function startPaperclip() {
   if (paperclipProc) return;
+  const agentJwtSecret = process.env.PAPERCLIP_AGENT_JWT_SECRET ?? process.env.BETTER_AUTH_SECRET;
   const childEnv = {
     ...process.env,
     HOST: INTERNAL_HOST,
     PORT: String(INTERNAL_PORT),
     PAPERCLIP_OPEN_ON_LISTEN: "false",
+    ...(agentJwtSecret ? { PAPERCLIP_AGENT_JWT_SECRET: agentJwtSecret } : {}),
   };
   paperclipProc = spawn("tsx", ["server/dist/index.js"], {
     cwd: APP_ROOT,
