@@ -25,6 +25,8 @@ ENV HOME=/paperclip
 ENV PAPERCLIP_HOME=/paperclip
 ENV HERMES_HOME=/paperclip/.hermes
 ENV OPENCODE_INSTALL_DIR=/usr/local/bin
+ENV HERMES_VENV=/opt/hermes-agent/.venv
+ENV PATH="${HERMES_VENV}/bin:/usr/local/bin:/usr/bin:/bin"
 
 WORKDIR /app
 
@@ -36,7 +38,8 @@ RUN npm install --omit=dev
 RUN npm install -g opencode-ai && \
   git clone --depth 1 --branch ${HERMES_REF} https://github.com/NousResearch/hermes-agent.git /opt/hermes-agent && \
   cd /opt/hermes-agent && \
-  uv pip install --system --no-cache -e ".[all]" && \
+  uv venv "${HERMES_VENV}" --python /usr/bin/python3 && \
+  uv pip install --python "${HERMES_VENV}/bin/python" --no-cache -e ".[all]" && \
   cd /opt/hermes-agent/web && npm install --silent && npm run build && \
   cd /opt/hermes-agent/ui-tui && npm install --silent --no-fund --no-audit --progress=false && npm run build && \
   rm -rf /opt/hermes-agent/web /opt/hermes-agent/.git /root/.npm
