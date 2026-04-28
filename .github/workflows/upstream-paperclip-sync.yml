@@ -1,4 +1,4 @@
-name: sync-upstream-paperclip
+name: sync-upstream-dependencies
 
 on:
   workflow_dispatch:
@@ -15,7 +15,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Fetch latest upstream release and npm version
+      - name: Fetch upstream dependency versions
         run: |
           python3 - <<'PY'
           import json, urllib.request
@@ -26,16 +26,45 @@ jobs:
               with urllib.request.urlopen(req, timeout=30) as r:
                   return json.load(r)
 
-          gh = get_json('https://api.github.com/repos/paperclipai/paperclip/releases/latest')
-          npm = get_json('https://registry.npmjs.org/paperclipai/latest')
+          def latest_release(repo):
+              data = get_json(f'https://api.github.com/repos/{repo}/releases/latest')
+              return {
+                  'repo': repo,
+                  'tag': data.get('tag_name'),
+                  'name': data.get('name'),
+                  'published_at': data.get('published_at'),
+              }
+
+          def branch_head(repo, branch):
+              data = get_json(f'https://api.github.com/repos/{repo}/commits/{branch}')
+              return {
+                  'repo': repo,
+                  'branch': branch,
+                  'sha': data.get('sha'),
+                  'committed_at': (((data.get('commit') or {}).get('committer') or {}).get('date')),
+              }
+
+          def npm_latest(pkg):
+              encoded = pkg.replace('/', '%2f')
+              data = get_json(f'https://registry.npmjs.org/{encoded}/latest')
+              return {
+                  'package': pkg,
+                  'version': data.get('version'),
+              }
 
           payload = {
               'tracked_at_utc': datetime.now(timezone.utc).isoformat(),
-              'upstream_repo': 'paperclipai/paperclip',
-              'latest_github_release_tag': gh.get('tag_name'),
-              'latest_github_release_name': gh.get('name'),
-              'latest_github_release_published_at': gh.get('published_at'),
-              'latest_npm_version': npm.get('version'),
+              'dockerfile_sources': {
+                  'paperclipai_release': latest_release('paperclipai/paperclip'),
+                  'paperclipai_npm': npm_latest('paperclipai'),
+                  'hermes_agent_branch_head': branch_head('NousResearch/hermes-agent', 'main'),
+                  'opencode_ai_npm': npm_latest('opencode-ai'),
+              },
+              'package_json_sources': {
+                  'paperclipai_npm': npm_latest('paperclipai'),
+                  'claude_code_npm': npm_latest('@anthropic-ai/claude-code'),
+                  'codex_npm': npm_latest('@openai/codex'),
+              }
           }
 
           with open('.upstream-paperclip.json', 'w') as f:
@@ -46,11 +75,11 @@ jobs:
       - name: Commit tracker update if changed
         run: |
           if git diff --quiet -- .upstream-paperclip.json; then
-            echo "No upstream version change"
+            echo "No upstream dependency change"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .upstream-paperclip.json
-          git commit -m "chore: sync upstream paperclip release tracker"
+          git commit -m "chore: sync upstream dependency tracker"
           git push
