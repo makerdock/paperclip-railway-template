@@ -26,7 +26,7 @@ ENV PAPERCLIP_HOME=/paperclip
 ENV HERMES_HOME=/paperclip/.hermes
 ENV OPENCODE_INSTALL_DIR=/usr/local/bin
 ENV HERMES_VENV=/opt/hermes-agent/.venv
-ENV PATH="${HERMES_VENV}/bin:/usr/local/bin:/usr/bin:/bin"
+ENV PATH="${HERMES_VENV}/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 WORKDIR /app
 
