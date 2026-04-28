@@ -32,9 +32,12 @@ WORKDIR /app
 
 # Copy package files and install dependencies
 COPY package.json ./
-RUN npm install --omit=dev
+RUN npm install --omit=dev && npm cache clean --force
 
-# Install OpenCode globally and Hermes from source
+# Install OpenCode globally and Hermes from source.
+# /opt/hermes-agent is left root-owned and world-readable so the paperclip
+# user can read+execute without a chown -R that would duplicate the multi-GB
+# venv into a new image layer (caused the Railway export to time out).
 RUN npm install -g opencode-ai && \
   git clone --depth 1 --branch ${HERMES_REF} https://github.com/NousResearch/hermes-agent.git /opt/hermes-agent && \
   cd /opt/hermes-agent && \
@@ -42,13 +45,15 @@ RUN npm install -g opencode-ai && \
   uv pip install --python "${HERMES_VENV}/bin/python" --no-cache -e ".[all]" && \
   cd /opt/hermes-agent/web && npm install --silent && npm run build && \
   cd /opt/hermes-agent/ui-tui && npm install --silent --no-fund --no-audit --progress=false && npm run build && \
-  rm -rf /opt/hermes-agent/web /opt/hermes-agent/.git /root/.npm
+  rm -rf /opt/hermes-agent/web /opt/hermes-agent/.git /root/.npm /root/.cache && \
+  find /opt/hermes-agent -type d -name __pycache__ -prune -exec rm -rf {} + && \
+  npm cache clean --force
 
 # Copy application code
 COPY . .
 
 # Give ownership of everything to the non-root user
-RUN chown -R paperclip:paperclip /app /paperclip /opt/hermes-agent
+RUN chown -R paperclip:paperclip /app
 
 # Copy and set up entrypoint (fixes volume mount ownership at runtime)
 COPY entrypoint.sh /entrypoint.sh
