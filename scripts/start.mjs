@@ -76,7 +76,7 @@ function writeConfig() {
       source: "onboard",
     },
     database: {
-      provider: "postgres",
+      mode: process.env.DATABASE_URL ? "postgres" : "embedded-postgres",
       connectionString: process.env.DATABASE_URL,
     },
     logging: {
