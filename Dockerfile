@@ -1,3 +1,4 @@
+FROM ghcr.io/astral-sh/uv:latest AS uv
 FROM node:20-slim
 
 # Install system dependencies for privilege dropping, Hermes, and OpenCode
@@ -7,11 +8,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   git \
   gosu \
   python3 \
-  python3-pip \
   && rm -rf /var/lib/apt/lists/*
 
 # Install uv for Hermes Python package installation
-RUN pip3 install --no-cache-dir uv
+COPY --from=uv /uv /uvx /usr/local/bin/
 
 ARG HERMES_REF=main
 
