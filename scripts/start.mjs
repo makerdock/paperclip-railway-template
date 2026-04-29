@@ -126,7 +126,9 @@ function writeConfig() {
  *   AND hidden_at IS NULL
  *
  * Any duplicate tuples will cause the CREATE UNIQUE INDEX migration to fail.
- * We keep the most recently created row and delete the rest.
+ * We keep the most recently created row and hide duplicates (sets hidden_at).
+ * Hiding rather than deleting avoids foreign-key violations from child tables
+ * (issue_comments, heartbeat_runs, etc.) that reference the issue rows.
  */
 async function preMigrateCleanup() {
   const dbUrl = process.env.DATABASE_URL;
@@ -153,13 +155,14 @@ async function preMigrateCleanup() {
             AND origin_id IS NOT NULL
             AND hidden_at IS NULL
         )
-        DELETE FROM issues
+        UPDATE issues
+        SET hidden_at = NOW()
         WHERE id IN (SELECT id FROM duplicates WHERE rn > 1)
         RETURNING id
       `;
 
       if (result.length > 0) {
-        console.log(`✅ Pre-migration cleanup: deleted ${result.length} duplicate stranded_issue_recovery issues`);
+        console.log(`✅ Pre-migration cleanup: hid ${result.length} duplicate stranded_issue_recovery issues`);
       } else {
         console.log("✅ No duplicate stranded_issue_recovery issues found");
       }
