@@ -114,83 +114,14 @@ function writeConfig() {
   console.log(`   Config written to ${CONFIG_PATH}`);
 }
 
-// ── Pre-migration cleanup ─────────────────────────────────────────────────────
-
-/**
- * Deduplicates stranded_issue_recovery rows that would violate the new unique index
- * `issues_active_stranded_issue_recovery_uq` introduced in paperclipai@2026.428.0.
- *
- * The index is on (company_id, origin_kind, origin_id) WHERE
- *   origin_kind = 'stranded_issue_recovery'
- *   AND origin_id IS NOT NULL
- *   AND hidden_at IS NULL
- *
- * Any duplicate tuples will cause the CREATE UNIQUE INDEX migration to fail.
- * We keep the most recently created row and hide duplicates (sets hidden_at).
- * Hiding rather than deleting avoids foreign-key violations from child tables
- * (issue_comments, heartbeat_runs, etc.) that reference the issue rows.
- */
-async function preMigrateCleanup() {
-  const dbUrl = process.env.DATABASE_URL;
-  if (!dbUrl) return; // No postgres configured — nothing to clean
-
-  try {
-    // postgres is a transitive dependency of paperclipai — always available in node_modules
-    const { default: postgres } = await import("postgres");
-    const sql = postgres(dbUrl, { idle_timeout: 10, max: 1 });
-
-    try {
-      console.log("🧹 Checking for duplicate stranded_issue_recovery issues...");
-
-      const result = await sql`
-        WITH duplicates AS (
-          SELECT
-            id,
-            ROW_NUMBER() OVER (
-              PARTITION BY company_id, origin_kind, origin_id
-              ORDER BY created_at DESC
-            ) as rn
-          FROM issues
-          WHERE origin_kind = 'stranded_issue_recovery'
-            AND origin_id IS NOT NULL
-            AND hidden_at IS NULL
-        )
-        UPDATE issues
-        SET hidden_at = NOW()
-        WHERE id IN (SELECT id FROM duplicates WHERE rn > 1)
-        RETURNING id
-      `;
-
-      if (result.length > 0) {
-        console.log(`✅ Pre-migration cleanup: hid ${result.length} duplicate stranded_issue_recovery issues`);
-      } else {
-        console.log("✅ No duplicate stranded_issue_recovery issues found");
-      }
-    } finally {
-      await sql.end();
-    }
-  } catch (err) {
-    // Fresh install: issues table doesn't exist yet — migration will work fine
-    if (err.code === "42P01" || err.message?.includes("relation") && err.message?.includes("does not exist")) {
-      console.log("ℹ️  Issues table doesn't exist yet (fresh install) — skipping pre-migration cleanup");
-    } else {
-      console.warn("⚠️  Pre-migration cleanup error (non-fatal, Paperclip will retry):", err.message);
-    }
-  }
-}
-
 // ── Paperclip process ─────────────────────────────────────────────────────────
 
-async function startPaperclip() {
+function startPaperclip() {
   if (paperclipProc) return; // already running
 
   console.log(`\n🚀 Starting Paperclip on internal port ${PAPERCLIP_PORT}...\n`);
 
   writeConfig();
-
-  // Clean up duplicate data before Paperclip applies the 2026.428.0 migration
-  // that adds the issues_active_stranded_issue_recovery_uq unique index.
-  await preMigrateCleanup();
 
   paperclipProc = spawn(
     "node",
@@ -448,5 +379,5 @@ function startServer() {
 startServer();
 
 if (isReady()) {
-  startPaperclip().catch(err => console.error("Paperclip startup failed:", err));
+  startPaperclip();
 }
