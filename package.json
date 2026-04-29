@@ -8,7 +8,7 @@
     "build": "echo 'No build step required'"
   },
   "dependencies": {
-    "paperclipai": "latest",
+    "paperclipai": "2026.427.0",
     "@anthropic-ai/claude-code": "latest",
     "@openai/codex": "latest"
   },
