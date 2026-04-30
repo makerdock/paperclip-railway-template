@@ -57,6 +57,7 @@ jobs:
               'dockerfile_sources': {
                   'paperclipai_release': latest_release('paperclipai/paperclip'),
                   'paperclipai_npm': npm_latest('paperclipai'),
+                  'hermes_agent_branch_head': branch_head('NousResearch/hermes-agent', 'main'),
                   'opencode_ai_npm': npm_latest('opencode-ai'),
               },
               'package_json_sources': {
