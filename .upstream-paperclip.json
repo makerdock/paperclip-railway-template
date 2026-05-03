@@ -1,5 +1,5 @@
 {
-  "tracked_at_utc": "2026-05-02T18:57:58.951549+00:00",
+  "tracked_at_utc": "2026-05-03T02:49:17.060690+00:00",
   "dockerfile_sources": {
     "paperclipai_release": {
       "repo": "paperclipai/paperclip",
@@ -19,7 +19,7 @@
     },
     "opencode_ai_npm": {
       "package": "opencode-ai",
-      "version": "1.14.32"
+      "version": "1.14.33"
     }
   },
   "package_json_sources": {
