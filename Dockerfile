@@ -1,4 +1,5 @@
 FROM ghcr.io/astral-sh/uv:latest AS uv
+FROM oven/bun:latest AS bun
 FROM node:20-slim
 
 # Install system dependencies for privilege dropping, Hermes, and OpenCode
@@ -17,6 +18,11 @@ ARG HERMES_REF=main
 
 # Create a non-root user (required: Claude CLI refuses --dangerously-skip-permissions as root)
 RUN groupadd -r paperclip && useradd -r -g paperclip -m -d /paperclip -s /bin/bash paperclip
+
+# Copy Bun binary from the multi-stage build for gbrain
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bunx /usr/local/bin/
+
+ENV GBRAIN_HOME=/opt/gbrain
 
 # Create the paperclip home directory (Railway volume mount point)
 RUN mkdir -p /paperclip/.hermes /paperclip/.config/opencode && chown -R paperclip:paperclip /paperclip
@@ -48,6 +54,13 @@ RUN npm install -g opencode-ai && \
   rm -rf /opt/hermes-agent/web /opt/hermes-agent/.git /root/.npm /root/.cache && \
   find /opt/hermes-agent -type d -name __pycache__ -prune -exec rm -rf {} + && \
   npm cache clean --force
+
+# Install gbrain (CLI for generative brainstorming)
+RUN git clone --depth 1 https://github.com/garrytan/gbrain.git /opt/gbrain && \
+  cd /opt/gbrain && \
+  bun install && \
+  bun link && \
+  rm -rf /opt/gbrain/.git /opt/gbrain/node_modules/.cache /root/.bun
 
 # Copy application code
 COPY . .
