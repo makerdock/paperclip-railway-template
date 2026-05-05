@@ -1,0 +1,230 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  margin-bottom: 16px;
+}
+
+.header h1 {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.header button {
+  background: none;
+  font-size: 14px;
+  color: var(--primary);
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.header button:hover {
+  background: var(--primary-light);
+}
+
+.week-label {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 24px;
+}
+
+.calendar-header {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  padding: 8px 0;
+}
+
+.calendar-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  font-size: 14px;
+  font-weight: 500;
+  border: 2px solid transparent;
+  transition: all 0.15s;
+}
+
+.calendar-day:active {
+  transform: scale(0.95);
+}
+
+.calendar-day.has-meals {
+  border-color: var(--primary-light);
+}
+
+.calendar-day.today {
+  background: var(--primary);
+  color: white;
+}
+
+.calendar-day.empty {
+  background: none;
+  box-shadow: none;
+}
+
+.calendar-day .day-number {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.calendar-day .day-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--primary);
+  margin-top: 3px;
+}
+
+.day-view {
+  animation: slideUp 0.25s ease-out;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.day-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.day-date {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+}
+
+.meal-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 16px;
+  margin-bottom: 12px;
+  transition: all 0.2s;
+}
+
+.meal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8px;
+}
+
+.meal-slot {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--primary);
+  margin-bottom: 2px;
+}
+
+.meal-name {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.meal-time {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.meal-macros {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.macro-badge {
+  font-size: 12px;
+  background: var(--bg);
+  padding: 2px 8px;
+  border-radius: 6px;
+  color: var(--text-secondary);
+}
+
+.swap-btn {
+  width: 100%;
+  padding: 8px;
+  margin-top: 10px;
+  background: var(--primary-light);
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 13px;
+  border-radius: 8px;
+  transition: background 0.15s;
+}
+
+.swap-btn:hover {
+  background: #bbf7d0;
+}
+
+.swap-panel {
+  margin-top: 8px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  animation: slideUp 0.2s ease-out;
+}
+
+.swap-panel h4 {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.swap-option {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: 8px;
+  margin-bottom: 6px;
+}
+
+.swap-option:active {
+  background: var(--primary-light);
+}
+
+.swap-option .name {
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.swap-option .macros {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-secondary);
+}
+
+.empty-state p {
+  font-size: 14px;
+  line-height: 1.6;
+}

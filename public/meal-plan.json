@@ -1,0 +1,129 @@
+{
+  "version": "1.0",
+  "weekId": "2026-W19",
+  "generatedAt": "2026-05-05T00:00:00+05:30",
+  "days": [
+    {
+      "date": "2026-05-04",
+      "dayOfWeek": "Monday",
+      "meals": [
+        {
+          "slot": "nashta",
+          "time": "08:00",
+          "name": "Poha",
+          "kcal": 250,
+          "protein": 6,
+          "alternatives": [
+            { "name": "Upma", "kcal": 240, "protein": 5 },
+            { "name": "Moong Dal Chilla", "kcal": 260, "protein": 10 }
+          ]
+        },
+        {
+          "slot": "lunch",
+          "time": "13:00",
+          "name": "Dal Rice + Sabzi",
+          "kcal": 500,
+          "protein": 18,
+          "alternatives": [
+            { "name": "Khichdi + Raita", "kcal": 480, "protein": 16 },
+            { "name": "Chole Rice", "kcal": 520, "protein": 20 }
+          ]
+        },
+        {
+          "slot": "snacks",
+          "time": "17:00",
+          "name": "Fruit Salad",
+          "kcal": 150,
+          "protein": 3,
+          "alternatives": [
+            { "name": "Roasted Makhana", "kcal": 140, "protein": 5 },
+            { "name": "Sprouts Chaat", "kcal": 160, "protein": 8 }
+          ]
+        },
+        {
+          "slot": "dinner",
+          "time": "20:00",
+          "name": "Roti + Lauki Sabzi",
+          "kcal": 400,
+          "protein": 14,
+          "alternatives": [
+            { "name": "Roti + Bhindi", "kcal": 380, "protein": 12 },
+            { "name": "Stuffed Paratha + Curd", "kcal": 420, "protein": 15 }
+          ]
+        },
+        {
+          "slot": "bedtime",
+          "time": "22:00",
+          "name": "Warm Milk + Haldi",
+          "kcal": 120,
+          "protein": 8,
+          "alternatives": [
+            { "name": "Chamomile Tea", "kcal": 5, "protein": 0 },
+            { "name": "Almond Milk", "kcal": 60, "protein": 2 }
+          ]
+        }
+      ]
+    },
+    {
+      "date": "2026-05-05",
+      "dayOfWeek": "Tuesday",
+      "meals": [
+        {
+          "slot": "nashta",
+          "time": "08:00",
+          "name": "Masala Dosa",
+          "kcal": 280,
+          "protein": 7,
+          "alternatives": [
+            { "name": "Idli + Sambhar", "kcal": 260, "protein": 8 },
+            { "name": "Rava Uttapam", "kcal": 290, "protein": 9 }
+          ]
+        },
+        {
+          "slot": "lunch",
+          "time": "13:00",
+          "name": "Rajma Rice",
+          "kcal": 520,
+          "protein": 20,
+          "alternatives": [
+            { "name": "Kadhi Rice", "kcal": 490, "protein": 14 },
+            { "name": "Paneer Rice", "kcal": 540, "protein": 24 }
+          ]
+        },
+        {
+          "slot": "snacks",
+          "time": "17:00",
+          "name": "Dhokla",
+          "kcal": 180,
+          "protein": 6,
+          "alternatives": [
+            { "name": "Samosa (Baked)", "kcal": 190, "protein": 5 },
+            { "name": "Bhel Puri", "kcal": 170, "protein": 4 }
+          ]
+        },
+        {
+          "slot": "dinner",
+          "time": "20:00",
+          "name": " Dal + Roti + Salad",
+          "kcal": 420,
+          "protein": 16,
+          "alternatives": [
+            { "name": "Veg Pulao + Raita", "kcal": 440, "protein": 14 },
+            { "name": "Sambar Rice", "kcal": 400, "protein": 15 }
+          ]
+        },
+        {
+          "slot": "bedtime",
+          "time": "22:00",
+          "name": "Warm Milk",
+          "kcal": 110,
+          "protein": 8,
+          "alternatives": [
+            { "name": "Turmeric Latte", "kcal": 80, "protein": 3 },
+            { "name": "Herbal Tea", "kcal": 5, "protein": 0 }
+          ]
+        }
+      ]
+    }
+  ]
+}
