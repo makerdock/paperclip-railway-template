@@ -1,5 +1,5 @@
 {
-  "tracked_at_utc": "2026-06-01T17:36:43.087094+00:00",
+  "tracked_at_utc": "2026-06-01T21:31:46.194383+00:00",
   "dockerfile_sources": {
     "paperclipai_release": {
       "repo": "paperclipai/paperclip",
@@ -33,7 +33,7 @@
     },
     "codex_npm": {
       "package": "@openai/codex",
-      "version": "0.135.0"
+      "version": "0.136.0"
     }
   }
 }
