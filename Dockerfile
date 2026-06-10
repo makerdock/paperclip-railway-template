@@ -1,7 +1,11 @@
 FROM node:20-slim
 
-# Install gosu for privilege dropping in entrypoint
-RUN apt-get update && apt-get install -y --no-install-recommends gosu && rm -rf /var/lib/apt/lists/*
+# Install gosu (privilege dropping in entrypoint) and ca-certificates.
+# ca-certificates is required: node:20-slim ships without the system CA bundle, and the
+# agent CLIs (codex/claude) use the OS trust store for TLS to api.openai.com / api.anthropic.com.
+# Without it, agent runs fail with "no native root CA certificates found". (Node's own fetch is
+# unaffected because Node bundles its own CAs.)
+RUN apt-get update && apt-get install -y --no-install-recommends gosu ca-certificates && rm -rf /var/lib/apt/lists/*
 
 # Create a non-root user (required: Claude CLI refuses --dangerously-skip-permissions as root)
 RUN groupadd -r paperclip && useradd -r -g paperclip -m -d /home/paperclip -s /bin/bash paperclip
