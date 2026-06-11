@@ -43,6 +43,7 @@ let paperclipProc = null;
 let paperclipReady = false;
 let inviteUrl = null;
 let bootstrapSkippedReason = null;
+let bootstrapAttempted = false; // guards the one-shot auto-generate after Paperclip is ready
 
 // ── Ready check (derived from reality, no flags) ─────────────────────────────
 
@@ -172,6 +173,19 @@ function startPaperclip() {
     if (!paperclipReady && (text.includes("Server listening on") || text.includes("server listening"))) {
       paperclipReady = true;
       console.log(`\n✅ Paperclip ready — proxying :${PUBLIC_PORT} → :${PAPERCLIP_PORT}\n`);
+
+      // Current Paperclip versions no longer print the first-admin bootstrap invite on `run`
+      // (they show a "waiting on first admin" page instead). If we didn't capture one from
+      // stdout, generate it ourselves so the Manage tab's registration link appears automatically.
+      if (!inviteUrl && !bootstrapSkippedReason && !bootstrapAttempted) {
+        bootstrapAttempted = true;
+        setTimeout(() => {
+          if (!inviteUrl && !bootstrapSkippedReason) {
+            console.log("\nℹ️ No bootstrap invite seen at startup — generating first-admin invite...\n");
+            generateBootstrapInvite(false);
+          }
+        }, 1500);
+      }
     }
   });
 
@@ -187,6 +201,44 @@ function startPaperclip() {
     console.log(`Paperclip exited with code ${code}`);
     // Railway will restart the whole container on exit — don't try to restart here
     process.exit(code ?? 1);
+  });
+}
+
+// Generate (or refresh) the first-admin bootstrap invite by running the Paperclip CLI.
+// Without --force it no-ops when an admin already exists (we surface that as the skip reason).
+// With --force it always mints a fresh invite (used by the "Rotate" button).
+function generateBootstrapInvite(force = false) {
+  return new Promise((resolve) => {
+    const args = ["node_modules/.bin/paperclipai", "auth", "bootstrap-ceo"];
+    if (force) args.push("--force");
+
+    const proc = spawn("node", args, {
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env, PAPERCLIP_CONFIG: CONFIG_PATH, PAPERCLIP_HOME: HOME },
+    });
+
+    let out = "";
+    const scan = (chunk) => {
+      out += chunk.toString();
+      const clean = stripAnsi(out);
+      const match = clean.match(/https?:\/\/\S+\/invite\/pcp_bootstrap_\S+/);
+      if (match) {
+        inviteUrl = match[0].trim();
+        bootstrapSkippedReason = null;
+        writeFileSync(INVITE_FILE, inviteUrl);
+        if (existsSync(SKIP_REASON_FILE)) unlinkSync(SKIP_REASON_FILE);
+      }
+      if (clean.includes("Instance already has an admin user")) {
+        bootstrapSkippedReason = "An admin account already exists. You can log in directly from the dashboard.";
+        writeFileSync(SKIP_REASON_FILE, bootstrapSkippedReason);
+      }
+    };
+
+    // bootstrap-ceo may print to either stream depending on version — scan both.
+    proc.stdout.on("data", scan);
+    proc.stderr.on("data", (d) => { process.stderr.write(d); scan(d); });
+    proc.on("error", (err) => { console.error("bootstrap-ceo error:", err); resolve(); });
+    proc.on("exit", () => resolve());
   });
 }
 
@@ -322,26 +374,7 @@ function startServer() {
     }
 
     if (path === "/setup/rotate-invite" && method === "POST") {
-      const proc = spawn(
-        "node",
-        ["node_modules/.bin/paperclipai", "auth", "bootstrap-ceo", "--force"],
-        { stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, PAPERCLIP_CONFIG: CONFIG_PATH } }
-      );
-      let out = "";
-      proc.stdout.on("data", d => {
-        out += d.toString();
-        const clean = stripAnsi(out);
-        const match = clean.match(/https?:\/\/\S+\/invite\/pcp_bootstrap_\S+/);
-        if (match) {
-          inviteUrl = match[0].trim();
-          writeFileSync(INVITE_FILE, inviteUrl);
-          // Clear skip reason since we now have a fresh invite
-          bootstrapSkippedReason = null;
-          if (existsSync(SKIP_REASON_FILE)) unlinkSync(SKIP_REASON_FILE);
-        }
-      });
-      proc.stderr.on("data", d => process.stderr.write(d));
-      proc.on("exit", () => {
+      generateBootstrapInvite(true).then(() => {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ url: inviteUrl }));
       });
