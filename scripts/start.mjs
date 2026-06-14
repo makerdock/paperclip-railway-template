@@ -22,6 +22,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync } from "
 import { spawn } from "child_process";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { homedir } from "os";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -31,6 +32,11 @@ const HOME = process.env.PAPERCLIP_HOME || "/paperclip";
 const CONFIG_PATH = join(HOME, "config.json");
 const INVITE_FILE = join(HOME, "bootstrap-invite.txt");
 const SKIP_REASON_FILE = join(HOME, "bootstrap-skip-reason.txt");
+
+// Shared Codex home — Paperclip's codex adapter seeds each company's managed
+// Codex home from here (it mirrors @paperclipai's resolveSharedCodexHomeDir).
+const SHARED_CODEX_HOME = process.env.CODEX_HOME?.trim() || join(homedir(), ".codex");
+const CODEX_AUTH_PATH = join(SHARED_CODEX_HOME, "auth.json");
 
 // Strip ANSI escape sequences (colors, cursor, etc.) from strings
 function stripAnsi(str) {
@@ -43,6 +49,7 @@ let paperclipProc = null;
 let paperclipReady = false;
 let inviteUrl = null;
 let bootstrapSkippedReason = null;
+let bootstrapAttempted = false; // guards the one-shot auto-generate after Paperclip is ready
 
 // ── Ready check (derived from reality, no flags) ─────────────────────────────
 
@@ -120,6 +127,36 @@ function writeConfig() {
   console.log(`   Config written to ${CONFIG_PATH}`);
 }
 
+// ── Codex auth seeding ────────────────────────────────────────────────────────
+//
+// Codex CLI (>= 0.122) ignores the OPENAI_API_KEY environment variable — it only
+// reads credentials from $CODEX_HOME/auth.json. Paperclip's codex adapter writes
+// that file itself, but ONLY when the key is present in its own adapter config
+// (config.env.OPENAI_API_KEY), not from the OS environment. On Railway the key
+// only exists as an OS env var, so nothing ever authenticates and every Codex run
+// fails with "401 Unauthorized: Missing bearer or basic authentication".
+//
+// Fix: write the key into the shared Codex home ourselves, matching the exact
+// schema Paperclip uses (writeApiKeyAuthJson → { OPENAI_API_KEY }). Paperclip then
+// symlinks this shared auth.json into each company's managed Codex home
+// (SYMLINKED_SHARED_FILES), so it propagates to every agent automatically.
+//
+// Note: the Claude adapter needs no equivalent — the Claude Code CLI reads
+// ANTHROPIC_API_KEY straight from the environment.
+function seedCodexAuth() {
+  const key = process.env.OPENAI_API_KEY?.trim();
+  if (key) {
+    mkdirSync(SHARED_CODEX_HOME, { recursive: true });
+    writeFileSync(CODEX_AUTH_PATH, JSON.stringify({ OPENAI_API_KEY: key }), { mode: 0o600 });
+    console.log(`   Seeded Codex auth.json at ${CODEX_AUTH_PATH}`);
+  } else if (existsSync(CODEX_AUTH_PATH)) {
+    // Key removed from env — drop the stale credential so Codex can fall back to
+    // subscription/login auth instead of presenting a now-invalid key.
+    unlinkSync(CODEX_AUTH_PATH);
+    console.log(`   Removed stale Codex auth.json (OPENAI_API_KEY unset)`);
+  }
+}
+
 // ── Paperclip process ─────────────────────────────────────────────────────────
 
 function startPaperclip() {
@@ -128,6 +165,7 @@ function startPaperclip() {
   console.log(`\n🚀 Starting Paperclip on internal port ${PAPERCLIP_PORT}...\n`);
 
   writeConfig();
+  seedCodexAuth();
 
   paperclipProc = spawn(
     "node",
@@ -172,6 +210,19 @@ function startPaperclip() {
     if (!paperclipReady && (text.includes("Server listening on") || text.includes("server listening"))) {
       paperclipReady = true;
       console.log(`\n✅ Paperclip ready — proxying :${PUBLIC_PORT} → :${PAPERCLIP_PORT}\n`);
+
+      // Current Paperclip versions no longer print the first-admin bootstrap invite on `run`
+      // (they show a "waiting on first admin" page instead). If we didn't capture one from
+      // stdout, generate it ourselves so the Manage tab's registration link appears automatically.
+      if (!inviteUrl && !bootstrapSkippedReason && !bootstrapAttempted) {
+        bootstrapAttempted = true;
+        setTimeout(() => {
+          if (!inviteUrl && !bootstrapSkippedReason) {
+            console.log("\nℹ️ No bootstrap invite seen at startup — generating first-admin invite...\n");
+            generateBootstrapInvite(false);
+          }
+        }, 1500);
+      }
     }
   });
 
@@ -187,6 +238,44 @@ function startPaperclip() {
     console.log(`Paperclip exited with code ${code}`);
     // Railway will restart the whole container on exit — don't try to restart here
     process.exit(code ?? 1);
+  });
+}
+
+// Generate (or refresh) the first-admin bootstrap invite by running the Paperclip CLI.
+// Without --force it no-ops when an admin already exists (we surface that as the skip reason).
+// With --force it always mints a fresh invite (used by the "Rotate" button).
+function generateBootstrapInvite(force = false) {
+  return new Promise((resolve) => {
+    const args = ["node_modules/.bin/paperclipai", "auth", "bootstrap-ceo"];
+    if (force) args.push("--force");
+
+    const proc = spawn("node", args, {
+      stdio: ["ignore", "pipe", "pipe"],
+      env: { ...process.env, PAPERCLIP_CONFIG: CONFIG_PATH, PAPERCLIP_HOME: HOME },
+    });
+
+    let out = "";
+    const scan = (chunk) => {
+      out += chunk.toString();
+      const clean = stripAnsi(out);
+      const match = clean.match(/https?:\/\/\S+\/invite\/pcp_bootstrap_\S+/);
+      if (match) {
+        inviteUrl = match[0].trim();
+        bootstrapSkippedReason = null;
+        writeFileSync(INVITE_FILE, inviteUrl);
+        if (existsSync(SKIP_REASON_FILE)) unlinkSync(SKIP_REASON_FILE);
+      }
+      if (clean.includes("Instance already has an admin user")) {
+        bootstrapSkippedReason = "An admin account already exists. You can log in directly from the dashboard.";
+        writeFileSync(SKIP_REASON_FILE, bootstrapSkippedReason);
+      }
+    };
+
+    // bootstrap-ceo may print to either stream depending on version — scan both.
+    proc.stdout.on("data", scan);
+    proc.stderr.on("data", (d) => { process.stderr.write(d); scan(d); });
+    proc.on("error", (err) => { console.error("bootstrap-ceo error:", err); resolve(); });
+    proc.on("exit", () => resolve());
   });
 }
 
@@ -322,26 +411,7 @@ function startServer() {
     }
 
     if (path === "/setup/rotate-invite" && method === "POST") {
-      const proc = spawn(
-        "node",
-        ["node_modules/.bin/paperclipai", "auth", "bootstrap-ceo", "--force"],
-        { stdio: ["ignore", "pipe", "pipe"], env: { ...process.env, PAPERCLIP_CONFIG: CONFIG_PATH } }
-      );
-      let out = "";
-      proc.stdout.on("data", d => {
-        out += d.toString();
-        const clean = stripAnsi(out);
-        const match = clean.match(/https?:\/\/\S+\/invite\/pcp_bootstrap_\S+/);
-        if (match) {
-          inviteUrl = match[0].trim();
-          writeFileSync(INVITE_FILE, inviteUrl);
-          // Clear skip reason since we now have a fresh invite
-          bootstrapSkippedReason = null;
-          if (existsSync(SKIP_REASON_FILE)) unlinkSync(SKIP_REASON_FILE);
-        }
-      });
-      proc.stderr.on("data", d => process.stderr.write(d));
-      proc.on("exit", () => {
+      generateBootstrapInvite(true).then(() => {
         res.writeHead(200, { "Content-Type": "application/json" });
         res.end(JSON.stringify({ url: inviteUrl }));
       });
