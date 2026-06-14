@@ -22,6 +22,7 @@ import { readFileSync, writeFileSync, existsSync, mkdirSync, unlinkSync } from "
 import { spawn } from "child_process";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import { homedir } from "os";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -31,6 +32,11 @@ const HOME = process.env.PAPERCLIP_HOME || "/paperclip";
 const CONFIG_PATH = join(HOME, "config.json");
 const INVITE_FILE = join(HOME, "bootstrap-invite.txt");
 const SKIP_REASON_FILE = join(HOME, "bootstrap-skip-reason.txt");
+
+// Shared Codex home — Paperclip's codex adapter seeds each company's managed
+// Codex home from here (it mirrors @paperclipai's resolveSharedCodexHomeDir).
+const SHARED_CODEX_HOME = process.env.CODEX_HOME?.trim() || join(homedir(), ".codex");
+const CODEX_AUTH_PATH = join(SHARED_CODEX_HOME, "auth.json");
 
 // Strip ANSI escape sequences (colors, cursor, etc.) from strings
 function stripAnsi(str) {
@@ -121,6 +127,36 @@ function writeConfig() {
   console.log(`   Config written to ${CONFIG_PATH}`);
 }
 
+// ── Codex auth seeding ────────────────────────────────────────────────────────
+//
+// Codex CLI (>= 0.122) ignores the OPENAI_API_KEY environment variable — it only
+// reads credentials from $CODEX_HOME/auth.json. Paperclip's codex adapter writes
+// that file itself, but ONLY when the key is present in its own adapter config
+// (config.env.OPENAI_API_KEY), not from the OS environment. On Railway the key
+// only exists as an OS env var, so nothing ever authenticates and every Codex run
+// fails with "401 Unauthorized: Missing bearer or basic authentication".
+//
+// Fix: write the key into the shared Codex home ourselves, matching the exact
+// schema Paperclip uses (writeApiKeyAuthJson → { OPENAI_API_KEY }). Paperclip then
+// symlinks this shared auth.json into each company's managed Codex home
+// (SYMLINKED_SHARED_FILES), so it propagates to every agent automatically.
+//
+// Note: the Claude adapter needs no equivalent — the Claude Code CLI reads
+// ANTHROPIC_API_KEY straight from the environment.
+function seedCodexAuth() {
+  const key = process.env.OPENAI_API_KEY?.trim();
+  if (key) {
+    mkdirSync(SHARED_CODEX_HOME, { recursive: true });
+    writeFileSync(CODEX_AUTH_PATH, JSON.stringify({ OPENAI_API_KEY: key }), { mode: 0o600 });
+    console.log(`   Seeded Codex auth.json at ${CODEX_AUTH_PATH}`);
+  } else if (existsSync(CODEX_AUTH_PATH)) {
+    // Key removed from env — drop the stale credential so Codex can fall back to
+    // subscription/login auth instead of presenting a now-invalid key.
+    unlinkSync(CODEX_AUTH_PATH);
+    console.log(`   Removed stale Codex auth.json (OPENAI_API_KEY unset)`);
+  }
+}
+
 // ── Paperclip process ─────────────────────────────────────────────────────────
 
 function startPaperclip() {
@@ -129,6 +165,7 @@ function startPaperclip() {
   console.log(`\n🚀 Starting Paperclip on internal port ${PAPERCLIP_PORT}...\n`);
 
   writeConfig();
+  seedCodexAuth();
 
   paperclipProc = spawn(
     "node",

@@ -96,3 +96,6 @@ Once Paperclip is running, this wrapper is transparent — it just passes throug
 
 **Paperclip starts but agents can't connect**
 → Make sure `PAPERCLIP_DEPLOYMENT_EXPOSURE=public` is set so the server accepts external connections.
+
+**Agent runs fail with `401 Unauthorized: Missing bearer` (Codex / OpenAI)**
+→ The Codex CLI (≥ 0.122) ignores the `OPENAI_API_KEY` env var and only reads credentials from `$CODEX_HOME/auth.json`. On boot, this wrapper seeds `~/.codex/auth.json` from `OPENAI_API_KEY` so Paperclip propagates it to each agent's Codex home. If you set the key after the first deploy, redeploy (or restart) so the file is written, then retry the task.
