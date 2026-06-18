@@ -1,5 +1,5 @@
 {
-  "tracked_at_utc": "2026-06-18T15:21:34.909340+00:00",
+  "tracked_at_utc": "2026-06-18T20:24:04.214709+00:00",
   "dockerfile_sources": {
     "paperclipai_release": {
       "repo": "paperclipai/paperclip",
@@ -14,8 +14,8 @@
     "hermes_agent_branch_head": {
       "repo": "NousResearch/hermes-agent",
       "branch": "main",
-      "sha": "646cd1b43e89920bb283dc11f38463204bcac9db",
-      "committed_at": "2026-06-18T15:00:08Z"
+      "sha": "73cd8622f9fcd5e368060d1a1678e08bd3d0a794",
+      "committed_at": "2026-06-18T20:23:32Z"
     },
     "opencode_ai_npm": {
       "package": "opencode-ai",
