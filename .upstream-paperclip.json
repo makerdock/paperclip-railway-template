@@ -1,5 +1,5 @@
 {
-  "tracked_at_utc": "2026-09-01T16:04:42.302868+00:00",
+  "tracked_at_utc": "2026-09-01T20:34:37.120129+00:00",
   "dockerfile_sources": {
     "paperclipai_release": {
       "repo": "paperclipai/paperclip",
@@ -14,8 +14,8 @@
     "hermes_agent_branch_head": {
       "repo": "NousResearch/hermes-agent",
       "branch": "main",
-      "sha": "58472d803a32edd19773bb2ed7426490981a636e",
-      "committed_at": "2026-09-01T15:42:35Z"
+      "sha": "d4611ac83789a8ff6813f6ab8ecd1eefe1f3ba3c",
+      "committed_at": "2026-09-01T20:22:11Z"
     },
     "opencode_ai_npm": {
       "package": "opencode-ai",
@@ -29,7 +29,7 @@
     },
     "claude_code_npm": {
       "package": "@anthropic-ai/claude-code",
-      "version": "2.1.252"
+      "version": "2.1.257"
     },
     "codex_npm": {
       "package": "@openai/codex",
