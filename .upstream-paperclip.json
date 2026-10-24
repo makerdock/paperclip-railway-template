@@ -1,21 +1,21 @@
 {
-  "tracked_at_utc": "2026-10-23T21:00:10.693527+00:00",
+  "tracked_at_utc": "2026-10-24T03:22:25.751745+00:00",
   "dockerfile_sources": {
     "paperclipai_release": {
       "repo": "paperclipai/paperclip",
-      "tag": "v2026.1012.0",
-      "name": "v2026.1012.0",
-      "published_at": "2026-10-12T21:06:53Z"
+      "tag": "v2026.1023.0",
+      "name": "v2026.1023.0",
+      "published_at": "2026-10-24T00:03:59Z"
     },
     "paperclipai_npm": {
       "package": "paperclipai",
-      "version": "2026.1012.0"
+      "version": "2026.1023.0"
     },
     "hermes_agent_branch_head": {
       "repo": "NousResearch/hermes-agent",
       "branch": "main",
-      "sha": "2a88712124c9643e75416fbaf35ac47eb730186e",
-      "committed_at": "2026-10-23T20:51:43Z"
+      "sha": "5894e750c3dba980d43b25aa29e3958149ba2c61",
+      "committed_at": "2026-10-24T00:40:33Z"
     },
     "opencode_ai_npm": {
       "package": "opencode-ai",
@@ -25,11 +25,11 @@
   "package_json_sources": {
     "paperclipai_npm": {
       "package": "paperclipai",
-      "version": "2026.1012.0"
+      "version": "2026.1023.0"
     },
     "claude_code_npm": {
       "package": "@anthropic-ai/claude-code",
-      "version": "2.1.309"
+      "version": "2.1.310"
     },
     "codex_npm": {
       "package": "@openai/codex",
