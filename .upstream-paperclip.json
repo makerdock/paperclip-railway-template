@@ -1,5 +1,5 @@
 {
-  "tracked_at_utc": "2026-10-29T22:26:54.835643+00:00",
+  "tracked_at_utc": "2026-10-30T04:28:28.460273+00:00",
   "dockerfile_sources": {
     "paperclipai_release": {
       "repo": "paperclipai/paperclip",
@@ -29,7 +29,7 @@
     },
     "claude_code_npm": {
       "package": "@anthropic-ai/claude-code",
-      "version": "2.1.312"
+      "version": "2.1.314"
     },
     "codex_npm": {
       "package": "@openai/codex",
